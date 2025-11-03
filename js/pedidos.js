@@ -18,7 +18,7 @@ async function fetchUserOrders(userId) {
     }
     
     const ordersRef = collection(db, "orders");
-    const q = query(ordersRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const q = query(ordersRef, where("userId", "==", userId));
     
     try {
         const querySnapshot = await getDocs(q);
