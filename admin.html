@@ -32,50 +32,64 @@
     </style>
 </head>
 <body class="admin-body">
-    <header>
+    <div id="live-announcer" class="visually-hidden" aria-live="assertive"></div>
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
+    <header role="banner">
         <div class="admin-header-content">
-            <button class="menu-toggle">
+            <button class="menu-toggle" aria-label="Abrir menu de administração" aria-expanded="false" aria-controls="admin-tabs">
                 <span class="bar"></span>
                 <span class="bar"></span>
                 <span class="bar"></span>
             </button>
             <h1>Painel do Administrador</h1>
         </div>
-        <nav>
+        <nav role="navigation">
             <a href="index.html">Ver Site</a>
         </nav>
     </header>
     
-    <main id="admin-panel" style="display: none;">
-        <div class="admin-tabs">
-            <button class="tab-button active" data-tab="add-sweet-content">Adicionar Doce</button>
-            <button class="tab-button" data-tab="modify-sweets-content">Modificar Doces</button>
-            <button class="tab-button" data-tab="orders-content">Ver Pedidos</button>
-            <button class="tab-button" data-tab="users-content">Ver Usuários</button>
-            <button class="tab-button" data-tab="contacts-content">Contatos</button>
-            <button class="tab-button" data-tab="reviews-content">Moderar Avaliações</button>
+    <main id="main-content" style="display: none;">
+        <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Painel de Administração">
+            <button class="tab-button active" role="tab" aria-selected="true" aria-controls="add-sweet-content" id="tab-add" data-tab="add-sweet-content">Adicionar Doce</button>
+            <button class="tab-button" role="tab" aria-selected="false" aria-controls="modify-sweets-content" id="tab-modify" data-tab="modify-sweets-content" tabindex="-1">Modificar Doces</button>
+            <button class="tab-button" role="tab" aria-selected="false" aria-controls="orders-content" id="tab-orders" data-tab="orders-content" tabindex="-1">Ver Pedidos</button>
+            <button class="tab-button" role="tab" aria-selected="false" aria-controls="users-content" id="tab-users" data-tab="users-content" tabindex="-1">Ver Usuários</button>
+            <button class="tab-button" role="tab" aria-selected="false" aria-controls="contacts-content" id="tab-contacts" data-tab="contacts-content" tabindex="-1">Contatos</button>
+            <button class="tab-button" role="tab" aria-selected="false" aria-controls="reviews-content" id="tab-reviews" data-tab="reviews-content" tabindex="-1">Moderar Avaliações</button>
         </div>
 
-        <div id="add-sweet-content" class="tab-content active">
+        <div id="add-sweet-content" class="tab-content active" role="tabpanel" aria-labelledby="tab-add" tabindex="0">
             <h2>Adicionar Novo Doce</h2>
             <form id="add-sweet-form">
-                <input type="text" id="sweet-name" placeholder="Nome do Doce" required>
+                <label for="sweet-name">Nome do Doce</label>
+                <input type="text" id="sweet-name" placeholder="Nome do Doce" required aria-required="true">
+                
+                <label for="sweet-description">Descrição</label>
                 <textarea id="sweet-description" placeholder="Descrição"></textarea>
-                <input type="number" id="sweet-price" placeholder="Preço (ex: 12.50)" step="0.01" required>
-                <input type="text" id="sweet-category" placeholder="Categoria (ex: Mochi)" required>
-                <input type="url" id="sweet-image-url" placeholder="URL da Imagem do Doce" required>
+                
+                <label for="sweet-price">Preço</label>
+                <input type="number" id="sweet-price" placeholder="Preço (ex: 12.50)" step="0.01" required aria-required="true">
+                
+                <label for="sweet-category">Categoria</label>
+                <input type="text" id="sweet-category" placeholder="Categoria (ex: Mochi)" required aria-required="true">
+                
+                <label for="sweet-image-url">URL da Imagem</label>
+                <input type="url" id="sweet-image-url" placeholder="URL da Imagem do Doce" required aria-required="true">
+                
                 <button type="submit">Adicionar Doce</button>
             </form>
         </div>
 
-        <div id="modify-sweets-content" class="tab-content">
+        <div id="modify-sweets-content" class="tab-content" role="tabpanel" aria-labelledby="tab-modify" tabindex="0" aria-hidden="true">
             <h2>Doces Existentes</h2>
             <div id="sweets-list-admin"></div>
         </div>
 
-        <div id="orders-content" class="tab-content">
+        <div id="orders-content" class="tab-content" role="tabpanel" aria-labelledby="tab-orders" tabindex="0" aria-hidden="true">
             <div class="orders-header">
                 <h2>Pedidos Recebidos</h2>
+                <label for="order-status-filter">Filtrar por status:</label>
                 <select id="order-status-filter">
                     <option value="Todos">Todos</option>
                     <option value="Pendente">Pendente</option>
@@ -83,45 +97,50 @@
                     <option value="Concluído">Concluído</option>
                 </select>
             </div>
-            <div id="orders-list-admin"></div>
+            <div id="orders-list-admin" aria-live="polite"></div>
         </div>
 
-        <div id="users-content" class="tab-content">
+        <div id="users-content" class="tab-content" role="tabpanel" aria-labelledby="tab-users" tabindex="0" aria-hidden="true">
             <h2>Usuários Cadastrados</h2>
             <div id="users-list-admin"></div>
         </div>
 
-        <div id="contacts-content" class="tab-content">
+        <div id="contacts-content" class="tab-content" role="tabpanel" aria-labelledby="tab-contacts" tabindex="0" aria-hidden="true">
             <h2>Mensagens de Contato</h2>
             <div id="contacts-list-admin"></div>
         </div>
 
-        <div id="reviews-content" class="tab-content">
+        <div id="reviews-content" class="tab-content" role="tabpanel" aria-labelledby="tab-reviews" tabindex="0" aria-hidden="true">
             <h2>Moderar Avaliações</h2>
-            <div id="reviews-list-admin"></div>
+            <div id="reviews-list-admin" aria-live="polite"></div>
         </div>
     </main>
 
-    <div id="edit-sweet-modal" style="display: none;">
-        <h3>Editar Doce</h3>
+    <div id="edit-sweet-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="edit-modal-heading">
+        <h3 id="edit-modal-heading">Editar Doce</h3>
         <form id="edit-sweet-form">
             <input type="hidden" id="edit-sweet-id">
-            <label>Nome:</label>
-            <input type="text" id="edit-sweet-name" required>
-            <label>Descrição:</label>
+            <label for="edit-sweet-name">Nome:</label>
+            <input type="text" id="edit-sweet-name" required aria-required="true">
+            
+            <label for="edit-sweet-description">Descrição:</label>
             <textarea id="edit-sweet-description"></textarea>
-            <label>Preço:</label>
-            <input type="number" id="edit-sweet-price" step="0.01" required>
-            <label>Categoria:</label>
-            <input type="text" id="edit-sweet-category" required>
-            <label>URL da Imagem:</label>
-            <input type="url" id="edit-sweet-image-url" required>
+            
+            <label for="edit-sweet-price">Preço:</label>
+            <input type="number" id="edit-sweet-price" step="0.01" required aria-required="true">
+            
+            <label for="edit-sweet-category">Categoria:</label>
+            <input type="text" id="edit-sweet-category" required aria-required="true">
+            
+            <label for="edit-sweet-image-url">URL da Imagem:</label>
+            <input type="url" id="edit-sweet-image-url" required aria-required="true">
+            
             <button type="submit">Salvar Alterações</button>
             <button type="button" id="cancel-edit">Cancelar</button>
         </form>
     </div>
 
-    <p id="loading-message">Verificando permissões...</p>
+    <p id="loading-message" role="status">Verificando permissões...</p>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js" type="module"></script>
@@ -133,11 +152,22 @@
         const menuToggle = document.querySelector('.menu-toggle');
         const adminMenu = document.querySelector('.admin-tabs');
         const menuButtons = document.querySelectorAll('.admin-tabs .tab-button');
+        const mainContent = document.getElementById('main-content');
+        let originalToggle = null;
 
         if (menuToggle && adminMenu) {
             menuToggle.addEventListener('click', () => {
-                adminMenu.classList.toggle('is-active');
+                const isActive = adminMenu.classList.toggle('is-active');
                 menuToggle.classList.toggle('is-active');
+                menuToggle.setAttribute('aria-expanded', isActive);
+                menuToggle.setAttribute('aria-label', isActive ? 'Abrir menu de administração' : 'Fechar menu de administração');
+                
+                if(isActive) {
+                    originalToggle = document.activeElement;
+                    adminMenu.querySelector('.tab-button').focus();
+                } else {
+                    originalToggle.focus();
+                }
             });
         }
 
@@ -146,6 +176,9 @@
                 button.addEventListener('click', () => {
                     adminMenu.classList.remove('is-active');
                     menuToggle.classList.remove('is-active');
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                    menuToggle.setAttribute('aria-label', 'Abrir menu de administração');
+                    originalToggle.focus();
                 });
             });
         }
@@ -158,6 +191,8 @@
             if (adminMenu.classList.contains('is-active') && !isClickInsideMenu && !isClickOnToggle) {
                 adminMenu.classList.remove('is-active');
                 menuToggle.classList.remove('is-active');
+                menuToggle.setAttribute('aria-expanded', 'false');
+                menuToggle.setAttribute('aria-label', 'Abrir menu de administração');
             }
         });
     </script>

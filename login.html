@@ -10,27 +10,43 @@
     <link rel="apple-touch-icon" href="img/icon.jpg">
 </head>
 <body>
-    <main>
+    <div id="live-announcer" class="visually-hidden" aria-live="assertive"></div>
+
+    <main role="main">
         <div class="auth-container">
-            <div class="auth-tabs">
-                <div class="tab-button active" data-tab="login">Login</div>
-                <div class="tab-button" data-tab="register">Cadastre-se</div>
+            <div class="auth-tabs" role="tablist" aria-label="Login ou Cadastro">
+                <div class="tab-button active" role="tab" aria-selected="true" aria-controls="login-panel" id="login-tab" data-tab="login-panel">Login</div>
+                <div class="tab-button" role="tab" aria-selected="false" aria-controls="register-panel" id="register-tab" data-tab="register-panel" tabindex="-1">Cadastre-se</div>
             </div>
 
-            <div id="login" class="tab-content active">
+            <div id="login-panel" class="tab-content active" role="tabpanel" aria-labelledby="login-tab" tabindex="0">
                 <h2>Login</h2>
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Senha" required>
+                
+                <label for="login-email" class="visually-hidden">Email</label>
+                <input type="email" id="login-email" placeholder="Email" required aria-required="true" autocomplete="email">
+                
+                <label for="login-password" class="visually-hidden">Senha</label>
+                <input type="password" id="login-password" placeholder="Senha" required aria-required="true" autocomplete="current-password">
+                
                 <button id="login-button">Entrar</button>
                 <button id="google-login-button">Entrar com Google</button>
             </div>
 
-            <div id="register" class="tab-content">
+            <div id="register-panel" class="tab-content" role="tabpanel" aria-labelledby="register-tab" tabindex="0" aria-hidden="true">
                 <h2>Cadastre-se</h2>
-                <input type="text" id="register-fullname" placeholder="Nome Completo" required>
-                <input type="tel" id="register-phone" placeholder="Número de Telefone" required>
-                <input type="email" id="register-email" placeholder="Seu email" required>
-                <input type="password" id="register-password" placeholder="Sua senha" required>
+                
+                <label for="register-fullname" class="visually-hidden">Nome Completo</label>
+                <input type="text" id="register-fullname" placeholder="Nome Completo" required aria-required="true" autocomplete="name">
+                
+                <label for="register-phone" class="visually-hidden">Número de Telefone</label>
+                <input type="tel" id="register-phone" placeholder="Número de Telefone" required aria-required="true" autocomplete="tel">
+                
+                <label for="register-email" class="visually-hidden">Seu email</label>
+                <input type="email" id="register-email" placeholder="Seu email" required aria-required="true" autocomplete="email">
+                
+                <label for="register-password" class="visually-hidden">Sua senha</label>
+                <input type="password" id="register-password" placeholder="Sua senha" required aria-required="true" autocomplete="new-password">
+                
                 <button id="register-button">Cadastrar</button>
             </div>
         </div>
@@ -41,5 +57,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js" type="module"></script>
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/auth.js" type="module"></script>
-    <script src="js/tabs.js" type="module"></script> </body>
+    <script src="js/tabs.js" type="module"></script> 
+</body>
 </html>

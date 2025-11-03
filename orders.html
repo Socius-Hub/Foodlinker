@@ -10,13 +10,16 @@
     <link rel="apple-touch-icon" href="img/icon.jpg">
 </head>
 <body>
-    <header>
+    <div id="live-announcer" class="visually-hidden" aria-live="assertive"></div>
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
+    <header role="banner">
         <h1>Faça sua Encomenda</h1>
-        <nav>
+        <nav role="navigation">
             <a href="index.html">Voltar</a>
         </nav>
     </header>
-    <main>
+    <main id="main-content">
         <section id="order-form-container">
             <h2>Selecione seus doces</h2>
             <form id="order-form">
@@ -25,7 +28,7 @@
             </form>
         </section>
     </main>
-    <footer>
+    <footer role="contentinfo">
         <p>&copy; 2025 Oishii Sobremesas Japonesas</p>
     </footer>
 

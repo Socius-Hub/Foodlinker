@@ -30,6 +30,47 @@ body {
     min-height: 100vh;
 }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background-color: var(--cor-primaria);
+    color: white;
+    padding: 10px;
+    z-index: 1001;
+    transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex="0"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="radio"]:focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 2px;
+    box-shadow: 0 0 10px rgba(0, 95, 204, 0.5);
+}
+
+
 h1, h2, h3 {
     font-family: var(--fonte-titulo);
     color: var(--cor-primaria);
@@ -267,6 +308,24 @@ button:hover {
     transition: color 0.2s;
 }
 
+.star-rating[role="radiogroup"] {
+    flex-direction: row;
+}
+
+.star-rating[role="radiogroup"] .star {
+    cursor: pointer;
+}
+
+.star-rating[role="radiogroup"] .star:focus-visible,
+.star-rating[role="radiogroup"] .star[aria-checked="true"] {
+    color: #ffc107;
+}
+
+.star-rating[role="radiogroup"] .star:hover,
+.star-rating[role="radiogroup"] .star:hover ~ .star {
+    color: #ffc107;
+}
+
 .star-rating.display-only {
     flex-direction: row;
     justify-content: flex-start;
@@ -312,9 +371,11 @@ button:hover {
     border-radius: 8px;
 }
 
-.sweet-item-order h4 {
+.sweet-item-order label {
     margin: 0;
     color: var(--cor-texto);
+    font-weight: bold;
+    font-family: var(--fonte-titulo);
 }
 
 .sweet-item-order input {
@@ -402,7 +463,8 @@ button:hover {
     border-bottom: 3px solid transparent;
 }
 
-.tab-button.active {
+.tab-button.active,
+.tab-button[aria-selected="true"] {
     color: var(--cor-primaria);
     border-bottom-color: var(--cor-primaria);
 }
@@ -411,7 +473,8 @@ button:hover {
     display: none;
 }
 
-.tab-content.active {
+.tab-content.active,
+.tab-content[aria-hidden="false"] {
     display: block;
 }
 
@@ -421,7 +484,8 @@ button:hover {
     gap: 1rem; 
 }
 
-.auth-container .tab-content.active {
+.auth-container .tab-content.active,
+.auth-container .tab-content[aria-hidden="false"] {
     display: flex;
 }
 
@@ -716,6 +780,7 @@ button:hover {
     cursor: pointer;
     z-index: 1001;
     padding: 8px;
+    border-radius: 5px;
 }
 
 .menu-toggle .bar {
