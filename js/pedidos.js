@@ -11,6 +11,8 @@ const reviewModalTitle = document.getElementById('review-modal-title');
 const starRatingContainer = reviewModal.querySelector('.star-rating');
 let currentSweetIdToReview = null;
 
+const reviewedSweetIds = new Set();
+
 async function fetchUserOrders(userId) {
     if (!userId) {
         orderHistoryList.innerHTML = '<p>Você precisa estar logado para ver seus pedidos.</p>';
@@ -18,9 +20,15 @@ async function fetchUserOrders(userId) {
     }
     
     const ordersRef = collection(db, "orders");
-    const q = query(ordersRef, where("userId", "==", userId));
+    const q = query(ordersRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
     
     try {
+        reviewedSweetIds.clear();
+        const reviewsRef = collection(db, "reviews");
+        const qReviews = query(reviewsRef, where("userId", "==", userId));
+        const reviewsSnapshot = await getDocs(qReviews);
+        reviewsSnapshot.docs.forEach(doc => reviewedSweetIds.add(doc.data().sweetId));
+
         const querySnapshot = await getDocs(q);
         if (querySnapshot.empty) {
             orderHistoryList.innerHTML = '<p>Você ainda não fez nenhum pedido.</p>';
@@ -33,12 +41,26 @@ async function fetchUserOrders(userId) {
             orderElement.classList.add('order-card');
             
             const orderDate = new Date(order.createdAt.seconds * 1000).toLocaleDateString('pt-BR');
-            let itemsHtml = order.items.map(item => `
-                <div class="order-item-detail">
-                    <span>${item.quantity}x ${item.name}</span>
-                    ${order.status === 'Concluído' ? `<button class="review-button" data-sweet-id="${item.sweetId}" data-sweet-name="${item.name}">Avaliar</button>` : ''}
-                </div>
-            `).join('');
+            
+            let itemsHtml = order.items.map(item => {
+                const alreadyReviewed = reviewedSweetIds.has(item.sweetId);
+                let buttonHtml = '';
+
+                if (order.status === 'Concluído') {
+                    if (alreadyReviewed) {
+                        buttonHtml = `<button class="review-button" disabled>Avaliado</button>`;
+                    } else {
+                        buttonHtml = `<button class="review-button" data-sweet-id="${item.sweetId}" data-sweet-name="${item.name}">Avaliar</button>`;
+                    }
+                }
+
+                return `
+                    <div class="order-item-detail">
+                        <span>${item.quantity}x ${item.name}</span>
+                        ${buttonHtml}
+                    </div>
+                `;
+            }).join('');
 
             orderElement.innerHTML = `
                 <div class="order-card-header">
@@ -55,11 +77,13 @@ async function fetchUserOrders(userId) {
         });
         
         document.querySelectorAll('.review-button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const sweetId = e.target.dataset.sweetId;
-                const sweetName = e.target.dataset.sweetName;
-                openReviewModal(sweetId, sweetName);
-            });
+            if (!button.disabled) {
+                button.addEventListener('click', (e) => {
+                    const sweetId = e.target.dataset.sweetId;
+                    const sweetName = e.target.dataset.sweetName;
+                    openReviewModal(sweetId, sweetName);
+                });
+            }
         });
 
     } catch (error) {
@@ -123,12 +147,17 @@ reviewForm.addEventListener('submit', async (e) => {
             createdAt: serverTimestamp()
         });
         
+        reviewedSweetIds.add(currentSweetIdToReview);
+        
         alert("Avaliação enviada com sucesso!");
         
-        const buttonToDisable = document.querySelector(`.review-button[data-sweet-id="${currentSweetIdToReview}"]`);
-        if (buttonToDisable) {
-            buttonToDisable.disabled = true;
-        }
+        const buttonsToDisable = document.querySelectorAll(`.review-button[data-sweet-id="${currentSweetIdToReview}"]`);
+        buttonsToDisable.forEach(button => {
+            if (!button.disabled) {
+                button.disabled = true;
+                button.textContent = "Avaliado";
+            }
+        });
         
         closeReviewModal();
 
