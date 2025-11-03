@@ -33,7 +33,7 @@
 </head>
 <body class="admin-body">
     <div id="live-announcer" class="visually-hidden" aria-live="assertive"></div>
-    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+    <a href="#admin-panel" class="skip-link">Pular para o conteúdo principal</a>
 
     <header role="banner">
         <div class="admin-header-content">
@@ -49,7 +49,7 @@
         </nav>
     </header>
     
-    <main id="main-content" style="display: none;">
+    <main id="admin-panel" style="display: none;">
         <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Painel de Administração">
             <button class="tab-button active" role="tab" aria-selected="true" aria-controls="add-sweet-content" id="tab-add" data-tab="add-sweet-content">Adicionar Doce</button>
             <button class="tab-button" role="tab" aria-selected="false" aria-controls="modify-sweets-content" id="tab-modify" data-tab="modify-sweets-content" tabindex="-1">Modificar Doces</button>
@@ -152,7 +152,6 @@
         const menuToggle = document.querySelector('.menu-toggle');
         const adminMenu = document.querySelector('.admin-tabs');
         const menuButtons = document.querySelectorAll('.admin-tabs .tab-button');
-        const mainContent = document.getElementById('main-content');
         let originalToggle = null;
 
         if (menuToggle && adminMenu) {

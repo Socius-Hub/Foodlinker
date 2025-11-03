@@ -19,22 +19,77 @@ const cancelEditBtn = document.getElementById('cancel-edit');
 const orderStatusFilter = document.getElementById('order-status-filter');
 
 let allOrders = []; 
+let elementToFocusOnClose = null;
+
+function announce(message) {
+    const announcer = document.getElementById('live-announcer');
+    if (announcer) {
+        announcer.textContent = message;
+    }
+}
 
 function setupTabs() {
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(item => item.classList.remove('active'));
-            tab.classList.add('active');
+    const tablist = document.querySelector('[role="tablist"]');
+    const tabs = document.querySelectorAll('[role="tab"]');
+    const contents = document.querySelectorAll('[role="tabpanel"]');
+    let tabFocus = 0;
 
-            const targetId = tab.dataset.tab;
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === targetId) {
-                    content.classList.add('active');
+    if (tablist) {
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectTab(tab, index);
+            });
+
+            tab.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    tabs[tabFocus].setAttribute('tabindex', -1);
+                    tabFocus++;
+                    if (tabFocus >= tabs.length) tabFocus = 0;
+                    tabs[tabFocus].setAttribute('tabindex', 0);
+                    tabs[tabFocus].focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    tabs[tabFocus].setAttribute('tabindex', -1);
+                    tabFocus--;
+                    if (tabFocus < 0) tabFocus = tabs.length - 1;
+                    tabs[tabFocus].setAttribute('tabindex', 0);
+                    tabs[tabFocus].focus();
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectTab(tab, index);
                 }
             });
         });
-    });
+    }
+
+    function selectTab(clickedTab, index) {
+        const targetId = clickedTab.dataset.tab;
+        const targetPanel = document.getElementById(targetId);
+
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.setAttribute('aria-selected', 'false');
+            tab.setAttribute('tabindex', -1);
+        });
+
+        clickedTab.classList.add('active');
+        clickedTab.setAttribute('aria-selected', 'true');
+        clickedTab.setAttribute('tabindex', 0);
+        tabFocus = index;
+
+        contents.forEach(panel => {
+            panel.classList.remove('active');
+            panel.setAttribute('aria-hidden', 'true');
+        });
+
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+            targetPanel.setAttribute('aria-hidden', 'false');
+            targetPanel.focus();
+        }
+    }
 }
 
 function renderOrders(statusFilter = 'Todos') {
@@ -85,6 +140,14 @@ async function fetchOrders() {
     renderOrders(); 
 }
 
+function closeModal() {
+    editSweetModal.style.display = 'none';
+    if(elementToFocusOnClose) {
+        elementToFocusOnClose.focus();
+        elementToFocusOnClose = null;
+    }
+}
+
 async function fetchAndRenderSweets() {
     const sweetsCollection = collection(db, 'sweets');
     const sweetsSnapshot = await getDocs(sweetsCollection);
@@ -106,16 +169,17 @@ async function fetchAndRenderSweets() {
             if (confirm(`Tem certeza que deseja excluir o doce "${sweet.name}"?`)) {
                 try {
                     await deleteDoc(doc(db, "sweets", sweet.id));
-                    alert("Doce excluído com sucesso!");
+                    announce("Doce excluído com sucesso!");
                     fetchAndRenderSweets();
                 } catch (error) {
                     console.error("Erro ao excluir doce: ", error);
-                    alert("Falha ao excluir o doce.");
+                    announce("Falha ao excluir o doce.");
                 }
             }
         });
 
-        sweetElement.querySelector('.edit-btn').addEventListener('click', () => {
+        sweetElement.querySelector('.edit-btn').addEventListener('click', (e) => {
+            elementToFocusOnClose = e.target;
             document.getElementById('edit-sweet-id').value = sweet.id;
             document.getElementById('edit-sweet-name').value = sweet.name;
             document.getElementById('edit-sweet-description').value = sweet.description;
@@ -123,6 +187,7 @@ async function fetchAndRenderSweets() {
             document.getElementById('edit-sweet-category').value = sweet.category;
             document.getElementById('edit-sweet-image-url').value = sweet.imageUrl;
             editSweetModal.style.display = 'block';
+            document.getElementById('edit-sweet-name').focus();
         });
 
         sweetsListAdmin.appendChild(sweetElement);
@@ -143,17 +208,21 @@ editSweetForm.addEventListener('submit', async (e) => {
     const sweetRef = doc(db, "sweets", sweetId);
     try {
         await updateDoc(sweetRef, updatedData);
-        alert("Doce atualizado com sucesso!");
-        editSweetModal.style.display = 'none';
+        announce("Doce atualizado com sucesso!");
+        closeModal();
         fetchAndRenderSweets(); 
     } catch (error) {
         console.error("Erro ao atualizar doce: ", error);
-        alert("Falha ao atualizar o doce.");
+        announce("Falha ao atualizar o doce.");
     }
 });
 
-cancelEditBtn.addEventListener('click', () => {
-    editSweetModal.style.display = 'none';
+cancelEditBtn.addEventListener('click', closeModal);
+
+editSweetModal.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
 });
 
 async function fetchUsers() {
@@ -177,7 +246,7 @@ async function updateOrderStatus(orderId, newStatus) {
     const orderRef = doc(db, "orders", orderId);
     try {
         await updateDoc(orderRef, { status: newStatus });
-        alert(`Status do pedido ${orderId} atualizado para ${newStatus}`);
+        announce(`Status do pedido ${orderId} atualizado para ${newStatus}`);
         const orderToUpdate = allOrders.find(order => order.id === orderId);
         if (orderToUpdate) {
             orderToUpdate.status = newStatus;
@@ -185,7 +254,7 @@ async function updateOrderStatus(orderId, newStatus) {
         renderOrders(orderStatusFilter.value);
     } catch (error) {
         console.error("Erro ao atualizar status do pedido: ", error);
-        alert("Falha ao atualizar o status.");
+        announce("Falha ao atualizar o status.");
     }
 }
 window.updateOrderStatus = updateOrderStatus;
@@ -238,11 +307,11 @@ async function fetchAndRenderReviews() {
             if (confirm("Tem certeza que deseja excluir esta avaliação?")) {
                 try {
                     await deleteDoc(doc(db, "reviews", reviewId));
-                    alert("Avaliação excluída com sucesso!");
+                    announce("Avaliação excluída com sucesso!");
                     fetchAndRenderReviews();
                 } catch (error) {
                     console.error("Erro ao excluir avaliação: ", error);
-                    alert("Falha ao excluir a avaliação.");
+                    announce("Falha ao excluir a avaliação.");
                 }
             }
         });
@@ -271,11 +340,11 @@ onAuthStateChanged(auth, async (user) => {
             fetchAndRenderSweets();
             fetchAndRenderReviews();
         } else {
-            alert("Acesso negado. Você não é um administrador.");
+            announce("Acesso negado. Você não é um administrador.");
             window.location.href = "index.html";
         }
     } else {
-        alert("Você precisa estar logado para acessar esta página.");
+        announce("Você precisa estar logado para acessar esta página.");
         window.location.href = "login.html";
     }
 });
@@ -290,7 +359,7 @@ if (addSweetForm) {
         const imageUrl = document.getElementById('sweet-image-url').value; 
 
         if (!imageUrl) {
-            alert("Por favor, insira uma URL para a imagem.");
+            announce("Por favor, insira uma URL para a imagem.");
             return;
         }
 
@@ -298,7 +367,7 @@ if (addSweetForm) {
             await addDoc(collection(db, "sweets"), {
                 name, description, price, category, imageUrl
             });
-            alert("Doce adicionado com sucesso!");
+            announce("Doce adicionado com sucesso!");
             addSweetForm.reset();
             fetchAndRenderSweets(); 
         } catch (error) {

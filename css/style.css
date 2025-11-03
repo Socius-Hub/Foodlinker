@@ -44,17 +44,28 @@ body {
 
 .skip-link {
     position: absolute;
-    top: -100px;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
     left: 0;
     background-color: var(--cor-primaria);
     color: white;
-    padding: 10px;
     z-index: 1001;
-    transition: top 0.3s ease;
 }
 
 .skip-link:focus {
-    top: 0;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
 }
 
 a:focus-visible,
