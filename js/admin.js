@@ -173,10 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (confirm(`Tem certeza que deseja excluir o doce "${sweet.name}"?`)) {
                     try {
                         await deleteDoc(doc(db, "sweets", sweet.id));
+                        alert("Doce excluído com sucesso!");
                         announce("Doce excluído com sucesso!");
                         fetchAndRenderSweets();
                     } catch (error) {
                         console.error("Erro ao excluir doce: ", error);
+                        alert("Falha ao excluir o doce.");
                         announce("Falha ao excluir o doce.");
                     }
                 }
@@ -220,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const orderRef = doc(db, "orders", orderId);
         try {
             await updateDoc(orderRef, { status: newStatus });
+            alert(`Status do pedido ${orderId} atualizado para ${newStatus}`);
             announce(`Status do pedido ${orderId} atualizado para ${newStatus}`);
             const orderToUpdate = allOrders.find(order => order.id === orderId);
             if (orderToUpdate) {
@@ -228,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(orderStatusFilter) renderOrders(orderStatusFilter.value);
         } catch (error) {
             console.error("Erro ao atualizar status do pedido: ", error);
+            alert("Falha ao atualizar o status.");
             announce("Falha ao atualizar o status.");
         }
     }
@@ -282,10 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (confirm("Tem certeza que deseja excluir esta avaliação?")) {
                     try {
                         await deleteDoc(doc(db, "reviews", reviewId));
+                        alert("Avaliação excluída com sucesso!");
                         announce("Avaliação excluída com sucesso!");
                         fetchAndRenderReviews();
                     } catch (error) {
                         console.error("Erro ao excluir avaliação: ", error);
+                        alert("Falha ao excluir a avaliação.");
                         announce("Falha ao excluir a avaliação.");
                     }
                 }
@@ -308,11 +314,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const sweetRef = doc(db, "sweets", sweetId);
             try {
                 await updateDoc(sweetRef, updatedData);
+                alert("Doce atualizado com sucesso!");
                 announce("Doce atualizado com sucesso!");
                 closeModal();
                 fetchAndRenderSweets(); 
             } catch (error) {
                 console.error("Erro ao atualizar doce: ", error);
+                alert("Falha ao atualizar o doce.");
                 announce("Falha ao atualizar o doce.");
             }
         });
@@ -340,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageUrl = document.getElementById('sweet-image-url').value; 
 
             if (!imageUrl) {
+                alert("Por favor, insira uma URL para a imagem.");
                 announce("Por favor, insira uma URL para a imagem.");
                 return;
             }
@@ -348,11 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await addDoc(collection(db, "sweets"), {
                     name, description, price, category, imageUrl
                 });
+                alert("Doce adicionado com sucesso!");
                 announce("Doce adicionado com sucesso!");
                 addSweetForm.reset();
                 fetchAndRenderSweets(); 
             } catch (error) {
                 console.error("Erro ao adicionar doce: ", error);
+                alert("Falha ao adicionar o doce.");
                 announce("Falha ao adicionar o doce.");
             }
         });
@@ -380,10 +391,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchAndRenderSweets();
                 fetchAndRenderReviews();
             } else {
+                alert("Acesso negado. Você não é um administrador.");
                 announce("Acesso negado. Você não é um administrador.");
                 window.location.href = "index.html";
             }
         } else {
+            alert("Você precisa estar logado para acessar esta página.");
             announce("Você precisa estar logado para acessar esta página.");
             window.location.href = "login.html";
         }
