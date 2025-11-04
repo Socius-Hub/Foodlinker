@@ -291,18 +291,25 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             if (sweetDoc.exists()) {
                                 const sweetData = sweetDoc.data();
-                                const oldRatingTotal = (sweetData.averageRating || 0) * (sweetData.reviewCount || 0);
                                 const oldReviewCount = sweetData.reviewCount || 0;
 
-                                const newReviewCount = oldReviewCount - 1;
-                                const newRatingTotal = oldRatingTotal - review.rating;
-                                
-                                const newAverageRating = (newReviewCount > 0) ? (newRatingTotal / newReviewCount) : 0;
-                                
-                                transaction.update(sweetRef, {
-                                    averageRating: newAverageRating,
-                                    reviewCount: newReviewCount
-                                });
+                                if (oldReviewCount > 0) {
+                                    const oldRatingTotal = (sweetData.averageRating || 0) * oldReviewCount;
+                                    const newReviewCount = oldReviewCount - 1;
+                                    const newRatingTotal = oldRatingTotal - review.rating;
+                                    
+                                    const newAverageRating = (newReviewCount > 0) ? (newRatingTotal / newReviewCount) : 0;
+                                    
+                                    transaction.update(sweetRef, {
+                                        averageRating: newAverageRating,
+                                        reviewCount: newReviewCount
+                                    });
+                                } else {
+                                    transaction.update(sweetRef, {
+                                        averageRating: 0,
+                                        reviewCount: 0
+                                    });
+                                }
                             }
                             transaction.delete(reviewRef);
                         });
