@@ -127,7 +127,7 @@ async function populateCategories() {
 
 async function applyFilters() {
     try {
-        const nameFilter = searchName.value.toLowerCase();
+        const nameFilter = searchName.value;
         const categoryFilter = searchCategory.value;
         const sortOption = sortByPrice.value;
 
@@ -136,11 +136,26 @@ async function applyFilters() {
         if (categoryFilter) {
             q = query(q, where("category", "==", categoryFilter));
         }
+        
+        if (nameFilter) {
+            q = query(q, 
+                where("name", ">=", nameFilter),
+                where("name", "<=", nameFilter + '\uf8ff')
+            );
+        }
 
         if (sortOption === 'price-asc') {
-            q = query(q, orderBy("price", "asc"));
+            if (nameFilter) {
+                q = query(q, orderBy("name", "asc"), orderBy("price", "asc"));
+            } else {
+                q = query(q, orderBy("price", "asc"));
+            }
         } else if (sortOption === 'price-desc') {
-            q = query(q, orderBy("price", "desc"));
+            if (nameFilter) {
+                q = query(q, orderBy("name", "asc"), orderBy("price", "desc"));
+            } else {
+                q = query(q, orderBy("price", "desc"));
+            }
         } else {
             q = query(q, orderBy("name", "asc"));
         }
@@ -148,11 +163,7 @@ async function applyFilters() {
         const querySnapshot = await getDocs(q);
         const sweetsFromDB = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const filteredSweets = sweetsFromDB.filter(sweet => {
-            return sweet.name.toLowerCase().includes(nameFilter);
-        });
-
-        renderSweets(filteredSweets);
+        renderSweets(sweetsFromDB);
 
     } catch (error) {
         console.error("Erro ao aplicar filtros: ", error);
