@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchOrders() {
         const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
         const ordersSnapshot = await getDocs(q);
-        allOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        allOrders = ordersSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
         renderOrders(); 
     }
 
@@ -157,8 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const sweetsSnapshot = await getDocs(sweetsCollection);
         sweetsListAdmin.innerHTML = ''; 
 
-        sweetsSnapshot.forEach(doc => {
-            const sweet = { id: doc.id, ...doc.data() };
+        // CORREÇÃO AQUI: 'doc' foi renomeado para 'docSnap'
+        sweetsSnapshot.forEach(docSnap => {
+            const sweet = { id: docSnap.id, ...docSnap.data() };
             const sweetElement = document.createElement('div');
             sweetElement.classList.add('sweet-item-admin');
             sweetElement.innerHTML = `
@@ -172,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sweetElement.querySelector('.delete-btn').addEventListener('click', async () => {
                 if (confirm(`Tem certeza que deseja excluir o doce "${sweet.name}"?`)) {
                     try {
+                        // A 'doc' aqui agora se refere à *função* importada, o que está correto.
                         await deleteDoc(doc(db, "sweets", sweet.id));
                         alert("Doce excluído com sucesso!");
                         announce("Doce excluído com sucesso!");
@@ -205,8 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const usersCollection = collection(db, 'users');
         const usersSnapshot = await getDocs(usersCollection);
         usersListAdmin.innerHTML = '';
-        usersSnapshot.forEach(doc => {
-            const user = doc.data();
+        
+        // CORREÇÃO AQUI: 'doc' foi renomeado para 'docSnap'
+        usersSnapshot.forEach(docSnap => {
+            const user = docSnap.data();
             const userElement = document.createElement('div');
             userElement.classList.add('user-item');
             userElement.innerHTML = `
@@ -241,8 +245,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = query(collection(db, "contacts"), orderBy("createdAt", "desc"));
         const contactsSnapshot = await getDocs(q);
         contactsListAdmin.innerHTML = '';
-        contactsSnapshot.forEach(doc => {
-            const contact = doc.data();
+        
+        // CORREÇÃO AQUI: 'doc' foi renomeado para 'docSnap'
+        contactsSnapshot.forEach(docSnap => {
+            const contact = docSnap.data();
             const contactElement = document.createElement('div');
             contactElement.classList.add('user-item');
             contactElement.innerHTML = `
