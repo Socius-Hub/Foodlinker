@@ -111,7 +111,6 @@ A plataforma é dividida em duas partes principais:
 │   ├── contact.js
 │   ├── firebase-config.js
 │   ├── main.js
-│   ├── orders.js
 │   ├── pedidos.js
 │   └── tabs.js
 ├── img/
@@ -124,7 +123,6 @@ A plataforma é dividida em duas partes principais:
 ├── firebase.json
 ├── index.html
 ├── login.html
-├── orders.html
 ├── pedidos.html
 └── products.html
 
