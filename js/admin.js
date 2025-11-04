@@ -10,8 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const ordersListAdmin = document.getElementById('orders-list-admin');
     const contactsListAdmin = document.getElementById('contacts-list-admin');
     const addSweetForm = document.getElementById('add-sweet-form');
-    const tabs = document.querySelectorAll('.admin-tabs .tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
 
     const sweetsListAdmin = document.getElementById('sweets-list-admin');
     const reviewsListAdmin = document.getElementById('reviews-list-admin');
@@ -157,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const sweetsSnapshot = await getDocs(sweetsCollection);
         sweetsListAdmin.innerHTML = ''; 
 
-        // CORREÇÃO AQUI: 'doc' foi renomeado para 'docSnap'
         sweetsSnapshot.forEach(docSnap => {
             const sweet = { id: docSnap.id, ...docSnap.data() };
             const sweetElement = document.createElement('div');
@@ -173,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sweetElement.querySelector('.delete-btn').addEventListener('click', async () => {
                 if (confirm(`Tem certeza que deseja excluir o doce "${sweet.name}"?`)) {
                     try {
-                        // A 'doc' aqui agora se refere à *função* importada, o que está correto.
                         await deleteDoc(doc(db, "sweets", sweet.id));
                         alert("Doce excluído com sucesso!");
                         announce("Doce excluído com sucesso!");
@@ -208,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const usersSnapshot = await getDocs(usersCollection);
         usersListAdmin.innerHTML = '';
         
-        // CORREÇÃO AQUI: 'doc' foi renomeado para 'docSnap'
         usersSnapshot.forEach(docSnap => {
             const user = docSnap.data();
             const userElement = document.createElement('div');
@@ -246,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const contactsSnapshot = await getDocs(q);
         contactsListAdmin.innerHTML = '';
         
-        // CORREÇÃO AQUI: 'doc' foi renomeado para 'docSnap'
         contactsSnapshot.forEach(docSnap => {
             const contact = docSnap.data();
             const contactElement = document.createElement('div');
@@ -399,12 +393,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 alert("Acesso negado. Você não é um administrador.");
                 announce("Acesso negado. Você não é um administrador.");
-                window.location.href = "index.html";
+                window.location.href = "/";
             }
         } else {
             alert("Você precisa estar logado para acessar esta página.");
             announce("Você precisa estar logado para acessar esta página.");
-            window.location.href = "login.html";
+            window.location.href = "/login";
         }
     });
 

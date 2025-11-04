@@ -35,7 +35,7 @@ if (registerButton) {
             });
 
             alert("Usuário cadastrado com sucesso!");
-            window.location.href = "index.html";
+            window.location.href = "/";
 
         } catch (error) {
             console.error("Erro no cadastro: ", error);
@@ -52,7 +52,7 @@ if (loginButton) {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             alert("Login bem-sucedido!");
-            window.location.href = "index.html";
+            window.location.href = "/";
         } catch (error) {
             console.error("Erro no login: ", error);
             alert("Falha no login: " + error.message);
@@ -74,7 +74,7 @@ if (googleLoginButton) {
             }, { merge: true });
 
             alert("Login com Google bem-sucedido!");
-            window.location.href = "index.html";
+            window.location.href = "/";
         } catch (error) {
             console.error("Erro no login com Google: ", error);
             alert("Falha no login com Google: " + error.message);

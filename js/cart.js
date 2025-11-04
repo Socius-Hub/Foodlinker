@@ -109,7 +109,7 @@ function confirmPhoneNumber(phone) {
 checkoutButton.addEventListener('click', async () => {
     if (!currentUser) {
         alert("Você precisa estar logado para finalizar o pedido.");
-        window.location.href = "login.html";
+        window.location.href = "/login";
         return;
     }
     if (getCart().length === 0) {

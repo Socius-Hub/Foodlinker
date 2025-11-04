@@ -12,7 +12,7 @@ onAuthStateChanged(auth, (user) => {
         currentUser = user;
     } else {
         alert("Você precisa estar logado para fazer uma encomenda.");
-        window.location.href = "login.html";
+        window.location.href = "/login";
     }
 });
 
@@ -78,7 +78,7 @@ orderForm.addEventListener('submit', async (e) => {
         });
         alert("Encomenda realizada com sucesso!");
         orderForm.reset();
-        window.location.href = "index.html";
+        window.location.href = "/";
     } catch (error) {
         console.error("Erro ao realizar pedido: ", error);
         alert("Falha ao realizar o pedido.");

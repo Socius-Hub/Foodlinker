@@ -6,7 +6,6 @@ const orderHistoryList = document.getElementById('order-history-list');
 const reviewModal = document.getElementById('review-modal');
 const reviewForm = document.getElementById('review-form');
 const cancelReviewBtn = document.getElementById('cancel-review-btn');
-const reviewSweetIdInput = document.getElementById('review-sweet-id');
 const reviewModalTitle = document.getElementById('review-modal-title');
 const starRatingContainer = reviewModal.querySelector('.star-rating');
 let currentSweetIdToReview = null;
