@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { doc, getDoc, addDoc, collection, getDocs, query, orderBy, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { doc, getDoc, addDoc, collection, getDocs, query, orderBy, updateDoc, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -275,20 +275,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Data:</strong> ${new Date(review.createdAt.seconds * 1000).toLocaleString()}</p>
                 <p><strong>Comentário:</strong> ${review.comment}</p>
                 <p><small>ID do Doce: ${review.sweetId}</small></p>
-                <button class="delete-review-btn" data-id="${review.id}">Excluir Avaliação</button>
+                <button class="delete-review-btn">Excluir Avaliação</button>
             `;
-            reviewsListAdmin.appendChild(reviewElement);
-        });
+            
+            reviewElement.querySelector('.delete-review-btn').addEventListener('click', async () => {
+                
+                if (confirm(`Tem certeza que deseja excluir esta avaliação de ${review.rating} estrela(s)?`)) {
+                    
+                    const reviewRef = doc(db, "reviews", review.id);
+                    const sweetRef = doc(db, "sweets", review.sweetId);
 
-        document.querySelectorAll('.delete-review-btn').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const reviewId = e.target.dataset.id;
-                if (confirm("Tem certeza que deseja excluir esta avaliação?")) {
                     try {
-                        await deleteDoc(doc(db, "reviews", reviewId));
-                        alert("Avaliação excluída com sucesso!");
-                        announce("Avaliação excluída com sucesso!");
-                        fetchAndRenderReviews();
+                        await runTransaction(db, async (transaction) => {
+                            const sweetDoc = await transaction.get(sweetRef);
+                            
+                            if (sweetDoc.exists()) {
+                                const sweetData = sweetDoc.data();
+                                const oldRatingTotal = (sweetData.averageRating || 0) * (sweetData.reviewCount || 0);
+                                const oldReviewCount = sweetData.reviewCount || 0;
+
+                                const newReviewCount = oldReviewCount - 1;
+                                const newRatingTotal = oldRatingTotal - review.rating;
+                                
+                                const newAverageRating = (newReviewCount > 0) ? (newRatingTotal / newReviewCount) : 0;
+                                
+                                transaction.update(sweetRef, {
+                                    averageRating: newAverageRating,
+                                    reviewCount: newReviewCount
+                                });
+                            }
+                            transaction.delete(reviewRef);
+                        });
+
+                        alert("Avaliação excluída e média do doce recalculada!");
+                        announce("Avaliação excluída e média do doce recalculada!");
+                        fetchAndRenderReviews(); 
+                        fetchAndRenderSweets(); 
+
                     } catch (error) {
                         console.error("Erro ao excluir avaliação: ", error);
                         alert("Falha ao excluir a avaliação.");
@@ -296,6 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+            reviewsListAdmin.appendChild(reviewElement);
         });
     }
 
@@ -355,7 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 await addDoc(collection(db, "sweets"), {
-                    name, description, price, category, imageUrl
+                    name, 
+                    description, 
+                    price, 
+                    category, 
+                    imageUrl,
+                    averageRating: 0,
+                    reviewCount: 0
                 });
                 alert("Doce adicionado com sucesso!");
                 announce("Doce adicionado com sucesso!");

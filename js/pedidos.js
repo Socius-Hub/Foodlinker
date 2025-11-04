@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { collection, query, where, getDocs, orderBy, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { collection, query, where, getDocs, orderBy, doc, getDoc, addDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const orderHistoryList = document.getElementById('order-history-list');
 const reviewModal = document.getElementById('review-modal');
@@ -8,9 +8,10 @@ const reviewForm = document.getElementById('review-form');
 const cancelReviewBtn = document.getElementById('cancel-review-btn');
 const reviewModalTitle = document.getElementById('review-modal-title');
 const starRatingContainer = reviewModal.querySelector('.star-rating');
-let currentSweetIdToReview = null;
 
-const reviewedSweetIds = new Set();
+let currentSweetIdToReview = null;
+let currentOrderIdToReview = null;
+const reviewedItems = new Set();
 
 async function fetchUserOrders(userId) {
     if (!userId) {
@@ -22,11 +23,16 @@ async function fetchUserOrders(userId) {
     const q = query(ordersRef, where("userId", "==", userId), orderBy("createdAt", "desc"));
     
     try {
-        reviewedSweetIds.clear();
+        reviewedItems.clear();
         const reviewsRef = collection(db, "reviews");
         const qReviews = query(reviewsRef, where("userId", "==", userId));
         const reviewsSnapshot = await getDocs(qReviews);
-        reviewsSnapshot.docs.forEach(doc => reviewedSweetIds.add(doc.data().sweetId));
+        reviewsSnapshot.docs.forEach(doc => {
+            const reviewData = doc.data();
+            if (reviewData.sweetId && reviewData.orderId) {
+                reviewedItems.add(`${reviewData.sweetId}-${reviewData.orderId}`);
+            }
+        });
 
         const querySnapshot = await getDocs(q);
         if (querySnapshot.empty) {
@@ -36,20 +42,22 @@ async function fetchUserOrders(userId) {
         orderHistoryList.innerHTML = ''; 
         querySnapshot.forEach(doc => {
             const order = doc.data();
+            const orderId = doc.id;
             const orderElement = document.createElement('div');
             orderElement.classList.add('order-card');
             
             const orderDate = new Date(order.createdAt.seconds * 1000).toLocaleDateString('pt-BR');
             
             let itemsHtml = order.items.map(item => {
-                const alreadyReviewed = reviewedSweetIds.has(item.sweetId);
+                const compositeKey = `${item.sweetId}-${orderId}`;
+                const alreadyReviewed = reviewedItems.has(compositeKey);
                 let buttonHtml = '';
 
                 if (order.status === 'Concluído') {
                     if (alreadyReviewed) {
                         buttonHtml = `<button class="review-button" disabled>Avaliado</button>`;
                     } else {
-                        buttonHtml = `<button class="review-button" data-sweet-id="${item.sweetId}" data-sweet-name="${item.name}">Avaliar</button>`;
+                        buttonHtml = `<button class="review-button" data-sweet-id="${item.sweetId}" data-sweet-name="${item.name}" data-order-id="${orderId}">Avaliar</button>`;
                     }
                 }
 
@@ -80,7 +88,8 @@ async function fetchUserOrders(userId) {
                 button.addEventListener('click', (e) => {
                     const sweetId = e.target.dataset.sweetId;
                     const sweetName = e.target.dataset.sweetName;
-                    openReviewModal(sweetId, sweetName);
+                    const orderId = e.target.dataset.orderId;
+                    openReviewModal(sweetId, sweetName, orderId);
                 });
             }
         });
@@ -91,8 +100,9 @@ async function fetchUserOrders(userId) {
     }
 }
 
-function openReviewModal(sweetId, sweetName) {
+function openReviewModal(sweetId, sweetName, orderId) {
     currentSweetIdToReview = sweetId;
+    currentOrderIdToReview = orderId;
     reviewModalTitle.textContent = `Avaliar ${sweetName}`;
     reviewForm.reset();
     resetStars();
@@ -102,6 +112,7 @@ function openReviewModal(sweetId, sweetName) {
 function closeReviewModal() {
     reviewModal.classList.remove('active');
     currentSweetIdToReview = null;
+    currentOrderIdToReview = null;
 }
 
 function resetStars() {
@@ -122,12 +133,12 @@ starRatingContainer.querySelectorAll('.star').forEach(star => {
 reviewForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const user = auth.currentUser;
-    if (!user || !currentSweetIdToReview) return;
+    if (!user || !currentSweetIdToReview || !currentOrderIdToReview) return;
 
-    const rating = starRatingContainer.dataset.rating;
+    const rating = Number(starRatingContainer.dataset.rating);
     const comment = document.getElementById('review-comment').value;
 
-    if (rating === "0" || !comment) {
+    if (rating === 0 || !comment) {
         alert("Por favor, selecione uma nota e escreva um comentário.");
         return;
     }
@@ -137,20 +148,47 @@ reviewForm.addEventListener('submit', async (e) => {
         const userDoc = await getDoc(userDocRef);
         const userName = userDoc.exists() ? userDoc.data().fullName : user.displayName;
 
-        await addDoc(collection(db, "reviews"), {
-            sweetId: currentSweetIdToReview,
-            userId: user.uid,
-            userName: userName,
-            rating: Number(rating),
-            comment: comment,
-            createdAt: serverTimestamp()
+        const sweetRef = doc(db, "sweets", currentSweetIdToReview);
+        const reviewRef = doc(collection(db, "reviews"));
+
+        await runTransaction(db, async (transaction) => {
+            const sweetDoc = await transaction.get(sweetRef);
+            
+            if (!sweetDoc.exists()) {
+                throw "Documento do doce não encontrado!";
+            }
+
+            const sweetData = sweetDoc.data();
+            const oldRatingTotal = (sweetData.averageRating || 0) * (sweetData.reviewCount || 0);
+            const oldReviewCount = sweetData.reviewCount || 0;
+
+            const newReviewCount = oldReviewCount + 1;
+            const newRatingTotal = oldRatingTotal + rating;
+            const newAverageRating = newRatingTotal / newReviewCount;
+
+            transaction.update(sweetRef, {
+                averageRating: newAverageRating,
+                reviewCount: newReviewCount
+            });
+
+            transaction.set(reviewRef, {
+                sweetId: currentSweetIdToReview,
+                orderId: currentOrderIdToReview,
+                userId: user.uid,
+                userName: userName,
+                rating: rating,
+                comment: comment,
+                createdAt: serverTimestamp()
+            });
         });
         
-        reviewedSweetIds.add(currentSweetIdToReview);
+        reviewedItems.add(`${currentSweetIdToReview}-${currentOrderIdToReview}`);
         
         alert("Avaliação enviada com sucesso!");
         
-        const buttonsToDisable = document.querySelectorAll(`.review-button[data-sweet-id="${currentSweetIdToReview}"]`);
+        const buttonsToDisable = document.querySelectorAll(
+            `.review-button[data-sweet-id="${currentSweetIdToReview}"][data-order-id="${currentOrderIdToReview}"]`
+        );
         buttonsToDisable.forEach(button => {
             if (!button.disabled) {
                 button.disabled = true;

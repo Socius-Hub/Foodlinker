@@ -31,7 +31,6 @@ if (registerButton) {
                 email: user.email,
                 fullName: fullName,
                 phone: phone,
-                role: "user"
             });
 
             alert("Usuário cadastrado com sucesso!");
@@ -70,7 +69,6 @@ if (googleLoginButton) {
             await setDoc(doc(db, "users", user.uid), {
                 email: user.email,
                 fullName: user.displayName,
-                role: "user"
             }, { merge: true });
 
             alert("Login com Google bem-sucedido!");

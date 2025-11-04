@@ -1,17 +1,65 @@
-const tabs = document.querySelectorAll('.tab-button');
-const contents = document.querySelectorAll('.tab-content');
+function setupTabs() {
+    const tablist = document.querySelector('[role="tablist"]');
+    const tabs = document.querySelectorAll('[role="tab"]');
+    const contents = document.querySelectorAll('[role="tabpanel"]');
+    let tabFocus = 0;
 
-tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-        const targetId = tab.dataset.tab;
+    if (tablist) {
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectTab(tab, index);
+            });
 
-        tabs.forEach(t => t.classList.remove('active'));
-        contents.forEach(c => c.classList.remove('active'));
+            tab.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    tabs[tabFocus].setAttribute('tabindex', -1);
+                    tabFocus++;
+                    if (tabFocus >= tabs.length) tabFocus = 0;
+                    tabs[tabFocus].setAttribute('tabindex', 0);
+                    tabs[tabFocus].focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    tabs[tabFocus].setAttribute('tabindex', -1);
+                    tabFocus--;
+                    if (tabFocus < 0) tabFocus = tabs.length - 1;
+                    tabs[tabFocus].setAttribute('tabindex', 0);
+                    tabs[tabFocus].focus();
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectTab(tab, index);
+                }
+            });
+        });
+    }
 
-        tab.classList.add('active');
-        const targetContent = document.getElementById(targetId);
-        if (targetContent) {
-            targetContent.classList.add('active');
+    function selectTab(clickedTab, index) {
+        const targetId = clickedTab.dataset.tab;
+        const targetPanel = document.getElementById(targetId);
+
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.setAttribute('aria-selected', 'false');
+            tab.setAttribute('tabindex', -1);
+        });
+
+        clickedTab.classList.add('active');
+        clickedTab.setAttribute('aria-selected', 'true');
+        clickedTab.setAttribute('tabindex', 0);
+        tabFocus = index;
+
+        contents.forEach(panel => {
+            panel.classList.remove('active');
+            panel.setAttribute('aria-hidden', 'true');
+        });
+
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+            targetPanel.setAttribute('aria-hidden', 'false');
+            targetPanel.focus();
         }
-    });
-});
+    }
+}
+
+document.addEventListener('DOMContentLoaded', setupTabs);

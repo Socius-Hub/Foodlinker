@@ -1,5 +1,5 @@
 import { auth, db } from './firebase-config.js';
-import { collection, getDocs, query, where, orderBy, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 console.log("main.js foi carregado com sucesso.");
 
@@ -8,18 +8,16 @@ const searchName = document.getElementById('search-by-name');
 const searchCategory = document.getElementById('search-by-category');
 const sortByPrice = document.getElementById('sort-by-price');
 
-let allSweets = [];
-
 function getCart() {
     return JSON.parse(localStorage.getItem('cart')) || [];
 }
 
 function saveCart(cart) {
     localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated')); // Avisa que o carrinho mudou
+    window.dispatchEvent(new Event('cartUpdated'));
 }
 
-function addToCart(sweetId) {
+function addToCart(sweetId, allFetchedSweets) {
     const quantityInput = document.getElementById(`quantity-${sweetId}`);
     const quantity = parseInt(quantityInput.value, 10);
 
@@ -28,7 +26,7 @@ function addToCart(sweetId) {
         return;
     }
 
-    const sweet = allSweets.find(s => s.id === sweetId);
+    const sweet = allFetchedSweets.find(s => s.id === sweetId);
     if (!sweet) return;
 
     const cart = getCart();
@@ -60,35 +58,6 @@ function renderStars(rating) {
     return starsHtml;
 }
 
-async function fetchReviewsForSweet(sweetId) {
-    const reviewsContainer = document.getElementById(`reviews-${sweetId}`);
-    if (!reviewsContainer) return;
-
-    const q = query(collection(db, "reviews"), where("sweetId", "==", sweetId));
-
-    try {
-        const querySnapshot = await getDocs(q);
-        
-        let totalRating = 0;
-        let reviewCount = querySnapshot.size;
-        
-        querySnapshot.forEach(doc => {
-            totalRating += doc.data().rating;
-        });
-        
-        const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
-
-        let reviewsHtml = `<h4>Avaliações (${reviewCount})</h4>`;
-        reviewsHtml += renderStars(averageRating);
-        
-        reviewsContainer.innerHTML = reviewsHtml;
-
-    } catch (error) {
-        console.error("Erro ao buscar avaliações: ", error);
-        reviewsContainer.innerHTML = "<p>Erro ao carregar avaliações.</p>";
-    }
-}
-
 async function renderSweets(sweets) {
     sweetsContainer.innerHTML = '';
     if (sweets.length === 0) {
@@ -99,6 +68,9 @@ async function renderSweets(sweets) {
     for (const sweet of sweets) {
         const sweetElement = document.createElement('div');
         sweetElement.classList.add('sweet-card');
+        
+        const averageRating = sweet.averageRating || 0;
+        const reviewCount = sweet.reviewCount || 0;
         
         sweetElement.innerHTML = `
             <img src="${sweet.imageUrl}" alt="${sweet.name}">
@@ -113,72 +85,84 @@ async function renderSweets(sweets) {
                 <button class="add-to-cart-btn" data-id="${sweet.id}">Adicionar</button>
             </div>
             <div class="reviews-section" id="reviews-${sweet.id}">
-                <p>Carregando avaliações...</p>
+                <h4>Avaliações (${reviewCount})</h4>
+                ${renderStars(averageRating)} 
             </div>
         `;
         sweetsContainer.appendChild(sweetElement);
-        fetchReviewsForSweet(sweet.id);
     }
     
-    addEventListenersToButtons();
+    addEventListenersToButtons(sweets);
 }
 
-function addEventListenersToButtons() {
+function addEventListenersToButtons(allFetchedSweets) {
     const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
     addToCartButtons.forEach(button => {
         button.addEventListener('click', () => {
             const sweetId = button.dataset.id;
-            addToCart(sweetId);
+            addToCart(sweetId, allFetchedSweets);
         });
     });
 }
 
-async function fetchSweets() {
+async function populateCategories() {
     try {
         const sweetsCollection = collection(db, 'sweets');
         const sweetsSnapshot = await getDocs(sweetsCollection);
-        allSweets = sweetsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        await renderSweets(allSweets);
-        populateCategories();
+        
+        const allCategories = sweetsSnapshot.docs.map(doc => doc.data().category);
+        const categories = [...new Set(allCategories)]; 
+
+        searchCategory.innerHTML = '<option value="">Todas as Categorias</option>';
+        categories.sort().forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            searchCategory.appendChild(option);
+        });
     } catch (error) {
-        console.error("Erro ao buscar os doces:", error);
-        sweetsContainer.innerHTML = '<p>Ocorreu um erro ao carregar os produtos. Verifique o console para mais detalhes.</p>';
+        console.error("Erro ao carregar categorias:", error);
     }
 }
 
-function populateCategories() {
-    const categories = [...new Set(allSweets.map(sweet => sweet.category))];
-    searchCategory.innerHTML = '<option value="">Todas as Categorias</option>';
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        searchCategory.appendChild(option);
-    });
-}
+async function applyFilters() {
+    try {
+        const nameFilter = searchName.value.toLowerCase();
+        const categoryFilter = searchCategory.value;
+        const sortOption = sortByPrice.value;
 
-function applyFilters() {
-    const nameFilter = searchName.value.toLowerCase();
-    const categoryFilter = searchCategory.value;
-    const sortOption = sortByPrice.value;
+        let q = query(collection(db, 'sweets'));
 
-    let filteredSweets = allSweets.filter(sweet => {
-        const nameMatch = sweet.name.toLowerCase().includes(nameFilter);
-        const categoryMatch = categoryFilter ? sweet.category === categoryFilter : true;
-        return nameMatch && categoryMatch;
-    });
+        if (categoryFilter) {
+            q = query(q, where("category", "==", categoryFilter));
+        }
 
-    if (sortOption === 'price-asc') {
-        filteredSweets.sort((a, b) => a.price - b.price);
-    } else if (sortOption === 'price-desc') {
-        filteredSweets.sort((a, b) => b.price - a.price);
+        if (sortOption === 'price-asc') {
+            q = query(q, orderBy("price", "asc"));
+        } else if (sortOption === 'price-desc') {
+            q = query(q, orderBy("price", "desc"));
+        } else {
+            q = query(q, orderBy("name", "asc"));
+        }
+
+        const querySnapshot = await getDocs(q);
+        const sweetsFromDB = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const filteredSweets = sweetsFromDB.filter(sweet => {
+            return sweet.name.toLowerCase().includes(nameFilter);
+        });
+
+        renderSweets(filteredSweets);
+
+    } catch (error) {
+        console.error("Erro ao aplicar filtros: ", error);
+        sweetsContainer.innerHTML = '<p>Ocorreu um erro ao carregar os produtos.</p>';
     }
-
-    renderSweets(filteredSweets);
 }
 
-searchName.addEventListener('input', applyFilters);
+searchName.addEventListener('change', applyFilters);
 searchCategory.addEventListener('change', applyFilters);
 sortByPrice.addEventListener('change', applyFilters);
 
-fetchSweets();
+populateCategories(); 
+applyFilters();
