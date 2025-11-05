@@ -3,7 +3,7 @@
 
 
 :root {
-    --cor-primaria: #EB527A; 
+    --cor-primaria: #E55379; 
     --cor-secundaria: #ff9ab4; 
     --cor-terciaria: #d4a5a5; 
     --cor-fundo: #fdf0f0;    
@@ -139,7 +139,7 @@ header nav a {
 footer {
     text-align: center;
     padding: 1.5rem;
-    background-color: #EB527A;
+    background-color: #E55379;
     color: var(--cor-branco);
 }
 
